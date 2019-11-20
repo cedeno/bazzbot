@@ -1,0 +1,15 @@
+{
+	"name": "BazzBot",
+	"version": "1.0.0",
+	"description": "Bazz Bot helps you learn!",
+	"main": "bot.js",
+	"author": "erghz",
+	"dependencies": {
+		"cheerio": "^1.0.0-rc.3",
+		"config": "^3.2.4",
+		"discord.js": "^11.5.1",
+		"puppeteer": "^2.0.0",
+		"request": "^2.88.0",
+		"request-promise": "^4.2.5"
+	}
+}
