@@ -1,16 +1,30 @@
 const Discord = require('discord.js');
-
 const client = new Discord.Client();
 const config = require('config');
+const defParse = require('./scraper');
+
+const urlPrefix = 'https://www.linternaute.fr/dictionnaire/fr/definition/';
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
 client.on('message', msg => {
-  if (msg.content === 'ping') {
-    msg.reply('Pong!');
-  }
+	let cmdSplit = msg.content.split(' ');
+  	if (cmdSplit[0] === '!def') {
+	    let word = cmdSplit[1];
+	    if (word.length > 15) {
+	    	console.log('word too long');
+	    	msg.reply('word too long');
+	    	return;
+	    }
+	    let url = urlPrefix + word + '/';
+	    console.log('url=', url);
+	    defParse(url).then(function (md) {
+	    	console.log('got md=', md);
+	    	msg.reply(md);
+	    });
+  	}
 });
 
 client.on('message', message => {
