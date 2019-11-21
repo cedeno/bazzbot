@@ -2,38 +2,35 @@
 const rp = require('request-promise');
 const $ = require('cheerio');
 const url = 'https://www.linternaute.fr/dictionnaire/fr/definition/compter/';
+const TurndownService = require('turndown');
 
+var turndownService = new TurndownService();
+turndownService.addRule('noLinks', {
+    filter: function (node, options) {
+      return (
+        node.nodeName === 'A' &&
+        node.getAttribute('href')
+      )
+    },
+    replacement: function (content, node) {
+	    return content;
+	}
+});
+
+// TODO: make way to get 2nd or 3rd meaning or get all meanings
+// TODO: print out how many other meanings there are so user knows even if we return only 1
 rp(url)
   .then(function(html){
-    //console.log($('.dico_title_2', html));
+  	let word = $('.dico_title_2', html).first().html();
+  	var markdown = turndownService.turndown(word);
+  	console.log("first sense: ", markdown);
 
-    
-/*    $('.dico_title_2', html).each(function(i, elem) {
-  		console.log( $(this).text() );
-	});*/
-
-
-    // each dico liste is a different kind of word, like a noun vs a verb or even transitif vs instransitif verb
-    // each one can have several 'sens'
-    $('.dico_definition.dico_liste', html).each(function(i, elem) {
-
-  		//let txt = $(this).text();
-
-  		//console.log('looking for gridline: ', txt.trim().substring(0,128));
-
-    	// find grid_last
-/*    	let gridLast = $(this).find('.grid_last');
-    	console.log('grid left: ', gridLast);*/
-	});
-
-	// maybe i want the UL or LI?? for the list
-	$('.dico_definition .dico_liste .grid_last', html).each(function(i, elem) {
-	  		let txt = $(this).text();
-	  		// then remove the first div you see after.. it will be extra stuff we dont need?
-	  		console.log('LI: ', txt);
-
-		});
+	let def = $('.dico_definition .dico_liste .grid_last', html).first().html();
+	markdown = turndownService.turndown(def);
+	console.log('md=\n' + markdown);
   })
   .catch(function(err){
+  	console.log('got error: ', err);
     //handle error
   });
+
