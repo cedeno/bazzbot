@@ -5,9 +5,12 @@
 	"main": "bot.js",
 	"author": "erghz",
 	"dependencies": {
+		"@google-cloud/text-to-speech": "^2.0.2",
 		"cheerio": "^1.0.0-rc.3",
 		"config": "^3.2.4",
-		"discord.js": "^11.5.1",
+		"discord.js": "github:discordjs/discord.js",
+		"ffmpeg-binaries": "^4.0.0",
+		"opusscript": "0.0.7",
 		"puppeteer": "^2.0.0",
 		"request": "^2.88.0",
 		"request-promise": "^4.2.5",

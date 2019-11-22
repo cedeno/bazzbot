@@ -2,15 +2,29 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const config = require('config');
 const Scraper = require('./scraper');
+const textToStream = require('./voice');
+const fs = require('fs');
+const util = require('util');
 
 const urlPrefix = 'https://www.linternaute.fr/dictionnaire/fr/definition/';
 const searchUrlPrefix = 'http://www.linternaute.com/encyclopedie/recherche/id-195/?f_libelle=';
 
+console.log('start');
+textToStream('hello world from raf')
+	.then(function(stream) {
+		console.log('got stream in promise');
+		// Write the binary audio content to a local file
+		const writeFile = util.promisify(fs.writeFile);
+  		writeFile('output.mp3', stream, 'binary').then(function(val) {
+	  		console.log('Audio content written to file: output.mp3');
+	  	});
+	});
+console.log('end');
 
 // this file for testing only
 
+/*
 let word = encodeURIComponent('accusé');
-
 
 Scraper.defParse(urlPrefix + 'accusé' + '/')
   .then(function (md) {
@@ -45,3 +59,4 @@ Scraper.defParse(urlPrefix + 'accusé' + '/')
   		console.log('got error');
   	}
 });
+*/

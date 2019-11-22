@@ -16,6 +16,7 @@ turndownService.addRule('noLinks', {
 	}
 });
 
+// TODO: show extra search results..
 // TODO: make a new harness for testing, discord is too heavy
 // TODO: work with search
 // TODO: check for accents

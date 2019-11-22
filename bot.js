@@ -2,6 +2,10 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const config = require('config');
 const Scraper = require('./scraper');
+const textToStream = require('./voice');
+
+const fs = require('fs');
+const util = require('util');
 
 const urlPrefix = 'https://www.linternaute.fr/dictionnaire/fr/definition/';
 const searchUrlPrefix = 'http://www.linternaute.com/encyclopedie/recherche/id-195/?f_libelle=';
@@ -55,7 +59,7 @@ client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
-client.on('message', msg => {
+client.on('message', async msg => {
 	let cmdSplit = msg.content.split(' ');
   	if (cmdSplit[0] === '!def') {
   		if (cmdSplit.length < 2) {
@@ -69,6 +73,49 @@ client.on('message', msg => {
 	    	return;
 	    }
 	    search(word, msg);
+  	}
+  	else if (cmdSplit[0] === '!say') {
+  		if (cmdSplit.length < 2) {
+	    	msg.reply('supply sentence after !say');
+  			return;
+  		}
+  		// Voice only works in guilds, if the message does not come from a guild,
+		// we ignore it
+		if (!msg.guild) return;
+
+	    // Only try to join the sender's voice channel if they are in one themselves
+	    if (msg.member.voice.channel) {
+	    	msg.member.voice.channel.join().then(function(connection) {
+		    	//connection.playFile('output.mp3');
+		    	let textToTranslate = msg.content.slice(4,msg.content.length); // remove the !say
+		    	console.log('word=', textToTranslate);
+		    	textToStream(textToTranslate)
+					.then(function(filename) {
+						console.log('got stream in promise, name=' + filename);
+						const dispatcher = connection.play(filename);
+						dispatcher.on('end', reason => {
+							console.log('end reason=', reason);
+						});
+						dispatcher.on('error', e => {
+		  					// Catch any errors that may arise
+		  					console.log('error', e);
+						});
+						dispatcher.on('start', e => {
+		  					console.log('start' ,e);
+						});
+						dispatcher.on('debug', e => {
+          					console.log("debug", e);
+        				});
+					})
+					.catch(function(err) {
+						console.log('error=', err);
+					});
+				});
+	    } else {
+	    	msg.reply('please join a voice channel first');
+	    	console.log('not in voice channel', msg.member);
+	    	return;
+	    }
   	}
 });
 
