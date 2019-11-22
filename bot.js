@@ -1,9 +1,10 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
 const config = require('config');
-const defParse = require('./scraper');
+const Scraper = require('./scraper');
 
 const urlPrefix = 'https://www.linternaute.fr/dictionnaire/fr/definition/';
+const searchUrlPrefix = 'http://www.linternaute.com/encyclopedie/recherche/id-195/?f_libelle=';
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -12,6 +13,10 @@ client.on('ready', () => {
 client.on('message', msg => {
 	let cmdSplit = msg.content.split(' ');
   	if (cmdSplit[0] === '!def') {
+  		if (cmdSplit.length < 2) {
+	    	msg.reply('must supply word');
+  			return;
+  		}
 	    let word = cmdSplit[1];
 	    if (word.length > 15) {
 	    	console.log('word too long');
@@ -20,7 +25,7 @@ client.on('message', msg => {
 	    }
 	    let url = urlPrefix + word + '/';
 	    console.log('url=', url);
-	    defParse(url).then(function (md) {
+	    Scraper.defParse(url).then(function (md) {
 	    	console.log('got md=', md);
 	    	msg.reply(md);
 	    });

@@ -16,6 +16,7 @@ turndownService.addRule('noLinks', {
 	}
 });
 
+// TODO: make a new harness for testing, discord is too heavy
 // TODO: work with search
 // TODO: check for accents
 // TODO: make way to get 2nd or 3rd meaning or get all meanings
@@ -34,10 +35,28 @@ const defParse = function(url) {
 		return markdown;
 	  })
 	  .catch(function(err){
-	  	console.log('got error: ', err);
-	  	return 'Cannot find word, ensure there are no accents';
-	    //handle error
+	  	console.log('error code=', err.statusCode);
+	  	throw (err);
 	  });
 };
 
-module.exports = defParse;
+// returns list of URLs
+const searchParse = function(url) {
+	return rp(url)
+	  .then(function(html){
+	  	let results = [];
+		$('.results li h2 a', html).each(function(i, elem) {
+			results.push($(this)[0].attribs.href);
+		});
+		return results;
+	  })
+	  .catch(function(err){
+	  	console.log('error code=', err.statusCode);
+	  	throw (err);
+	  });
+};
+
+module.exports = {
+	defParse,
+	searchParse
+};
