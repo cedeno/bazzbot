@@ -6,6 +6,51 @@ const Scraper = require('./scraper');
 const urlPrefix = 'https://www.linternaute.fr/dictionnaire/fr/definition/';
 const searchUrlPrefix = 'http://www.linternaute.com/encyclopedie/recherche/id-195/?f_libelle=';
 
+
+const search = function(wordIn, msg) {
+	let word = encodeURIComponent(wordIn);
+	Scraper.defParse(urlPrefix + word + '/')
+	  .then(function (md) {
+		console.log('got md=', md);
+		msg.reply(md);
+	  })
+	  .catch(function(err) {
+	  	if (err.statusCode == 400) {
+	  		console.log('couldnt find word, lets do a search for word ' + word);
+	  		
+	  		Scraper.searchParse(searchUrlPrefix + word)
+	  			.then(function(urls) {
+		  			console.log('got urls=', urls);
+		  			if (urls.length < 1) {
+		  				msg.reply('no matches');
+		  				return;
+		  			}
+		  			// pick the first one for the definition
+		  			Scraper.defParse(urls[0])
+		            	.then(function (md) {
+			            	console.log('looking up first results gave me this=', md);
+			            	msg.reply(md);
+			          	})
+		  				.catch(function(err){
+						  	if (err.statusCode == 400) {
+						  		console.log('failed to get first definition from search list');
+						  		msg.reply('error retrieving definition');
+						  	}
+					  	})
+				})
+				.catch(function(err) {
+					msg.reply('no matches');
+	  				console.log('got error from search');
+	  			});
+	  	}
+	  	else {
+	  		console.log('got error');
+	  		msg.reply('no matches');
+	  	}
+	});
+}
+
+
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
@@ -23,12 +68,7 @@ client.on('message', msg => {
 	    	msg.reply('word too long');
 	    	return;
 	    }
-	    let url = urlPrefix + word + '/';
-	    console.log('url=', url);
-	    Scraper.defParse(url).then(function (md) {
-	    	console.log('got md=', md);
-	    	msg.reply(md);
-	    });
+	    search(word, msg);
   	}
 });
 
