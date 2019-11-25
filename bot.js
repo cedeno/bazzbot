@@ -10,6 +10,8 @@ const util = require('util');
 const urlPrefix = 'https://www.linternaute.fr/dictionnaire/fr/definition/';
 const searchUrlPrefix = 'http://www.linternaute.com/encyclopedie/recherche/id-195/?f_libelle=';
 
+var voiceAccent = 'fr-FR';
+var voiceGender = 'FEMALE';
 
 const search = function(wordIn, msg) {
 	let word = encodeURIComponent(wordIn);
@@ -89,10 +91,11 @@ client.on('message', async msg => {
 		    	//connection.playFile('output.mp3');
 		    	let textToTranslate = msg.content.slice(4,msg.content.length); // remove the !say
 		    	console.log('word=', textToTranslate);
-		    	textToStream(textToTranslate)
+		    	textToStream(textToTranslate, voiceAccent, voiceGender)
 					.then(function(filename) {
 						console.log('got stream in promise, name=' + filename);
 						const dispatcher = connection.play(filename);
+						dispatcher.setVolume(0.5); // Set the volume to 50%
 						dispatcher.on('end', reason => {
 							console.log('end reason=', reason);
 						});
@@ -116,6 +119,29 @@ client.on('message', async msg => {
 	    	console.log('not in voice channel', msg.member);
 	    	return;
 	    }
+  	}
+  	// !voice accent fr-FR
+  	else if (cmdSplit[0] === '!voice') {
+  		if (cmdSplit.length < 3) {
+	    	msg.reply('example usage: !voice accent fr-FR, !voice gender male');
+  			return;
+  		}
+  		if (cmdSplit[1] === 'accent') {
+  			voiceAccent = cmdSplit[2];
+  			msg.reply('changed accent to ' + voiceAccent);
+  			return;
+  		}
+  		if (cmdSplit[1] === 'gender') {
+  			if (cmdSplit[2] === 'male') {
+  				voiceGender = 'MALE';
+  				msg.reply('guy voice activated');
+  			}
+  			else {
+  				voiceGender = 'FEMALE';
+  				msg.reply('gal voice activated');
+  			}
+  			return;
+  		}
   	}
 });
 
