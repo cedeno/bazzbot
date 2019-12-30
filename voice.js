@@ -36,7 +36,7 @@ function makeMP3Filename() {
 
 const textToStream = async function(textIn, accent, gender) {
   let text = textIn;
-  if (textIn.length > 1024) {
+  if (textIn.length > 600) {
     text = "Text is too long";
   }
 
@@ -49,7 +49,7 @@ const textToStream = async function(textIn, accent, gender) {
     // Select the language and SSML Voice Gender (optional)
     voice: {languageCode: accent, ssmlGender: gender},
     // Select the type of audio encoding
-    audioConfig: {audioEncoding: 'MP3'},
+    audioConfig: {audioEncoding: 'MP3', pitch: '0', speakingRate: '1.0'},
   };
 
   // Performs the Text-to-Speech request
