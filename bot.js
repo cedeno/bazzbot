@@ -13,6 +13,11 @@ const searchUrlPrefix = 'http://www.linternaute.com/encyclopedie/recherche/id-19
 var voiceAccent = 'fr-FR';
 var voiceGender = 'FEMALE';
 
+// last message someone said
+var lastMessage = "";
+
+// TODO: use expression search http://www.linternaute.fr/expression/
+// TODO: print out the song lyrics AS they are being sung??
 const search = function(wordIn, msg) {
 	let word = encodeURIComponent(wordIn);
 	Scraper.defParse(urlPrefix + word + '/')
@@ -56,6 +61,34 @@ const search = function(wordIn, msg) {
 	});
 }
 
+const translate = function(inText, msg) {
+  console.log('translate function, got text ' + inText);
+
+  projectId = 'formal-triode-259814' // Your GCP Project Id
+
+  // Imports the Google Cloud client library
+  const {Translate} = require('@google-cloud/translate').v2;
+
+  // Instantiates a client
+  const translate = new Translate({projectId});
+
+  async function quickStart(text) {
+  	console.log('quickStart function, text=' + text);
+
+    // The target language
+    const target = 'fr';
+
+    // Translates some text
+    const [translation] = await translate.translate(text, target);
+    console.log('Text: ' + text);
+    console.log('Translation: ' + translation);
+    msg.reply('Translation: ' + translation);
+  }
+
+  quickStart(inText);
+  // [END translate_quickstart]
+}
+
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -75,6 +108,26 @@ client.on('message', async msg => {
 	    	return;
 	    }
 	    search(word, msg);
+  	}
+  	else if (cmdSplit[0] === '!tr') {
+
+
+  		let textInTranslate = "error";
+  		if (cmdSplit.length < 2) {
+  			if (lastMessage == "") {
+  				msg.reply('must supply a messge');
+  				return;
+  			}
+  			textInTranslate = lastMessage;
+  		} else {
+  			textInTranslate = msg.content.substring(4);
+  		}
+  		if (textInTranslate.length > 600) {
+			msg.reply("Text is too long");
+  			return;
+		}
+  		console.log('incoming text to translate is ' + textInTranslate);
+		translate(textInTranslate, msg);
   	}
   	else if (cmdSplit[0] === '!say') {
   		if (cmdSplit.length < 2) {
@@ -142,6 +195,10 @@ client.on('message', async msg => {
   			}
   			return;
   		}
+  	}
+  	else {
+  		// in case we want to refer to the last message
+  		lastMessage = msg.content;
   	}
 });
 
