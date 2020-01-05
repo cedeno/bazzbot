@@ -4,6 +4,7 @@ const config = require('config');
 const Scraper = require('./scraper');
 const textToStream = require('./voice');
 
+const rp = require('request-promise');
 const fs = require('fs');
 const util = require('util');
 
@@ -61,7 +62,7 @@ const search = function(wordIn, msg) {
 	});
 }
 
-const translate = function(inText, msg) {
+const translate = function(destLang, inText, msg) {
   console.log('translate function, got text ' + inText);
 
   projectId = 'formal-triode-259814' // Your GCP Project Id
@@ -76,7 +77,7 @@ const translate = function(inText, msg) {
   	console.log('quickStart function, text=' + text);
 
     // The target language
-    const target = 'fr';
+    const target = destLang;
 
     // Translates some text
     const [translation] = await translate.translate(text, target);
@@ -89,10 +90,93 @@ const translate = function(inText, msg) {
   // [END translate_quickstart]
 }
 
+const downloadImageAttachment = function (msg) {
+  const extensions = ["png", "jpg", "jpeg", "gif"];
+  
+  if(msg.attachments.first()){//checks if there is an attachment
+    console.log("got ATTACHMENT: ", msg.attachments.first());
+  }
+  else {
+    console.log("got NO ATTACHMENTS");
+    return;
+  }
+  
+  const optionsStart = {
+    uri: msg.attachments.first().url,
+    method: 'GET',
+    encoding: "binary"
+  }
+  return rp(optionsStart)
+    .then(function(body, data) {
+      let writeStream = fs.createWriteStream('testoutput.jpg');
+      //console.log(body)
+      writeStream.write(body, 'binary');
+      writeStream.on('finish', () => {
+        console.log('wrote all data to file');
+      });
+      writeStream.end();
+      return 'testoutput.jpg';
+    }
+  );
+}
+
+
+const handleTranslateCommand = function(destLang, msg) {
+  let cmdSplit = msg.content.split(' ');
+  let textInTranslate = "error";
+  if (cmdSplit.length < 2) {
+  	if (lastMessage == "" && !msg.attachments.first()) {
+  		msg.reply('must supply a messge');
+  		return;
+  	}
+  	textInTranslate = lastMessage;
+  } else {
+  	textInTranslate = msg.content.substring(4);
+  }
+  if (textInTranslate.length > 600) {
+		msg.reply("Text is too long");
+  	return;
+	}
+  console.log('incoming text to translate is ' + textInTranslate);
+  if(msg.attachments.first()) {
+    downloadImageAttachment(msg).then(function(filename) {
+      console.log('inside wonload: filename=' + filename);
+      getTextFromImage(filename).then(function(texts) {
+        console.log('got texts final=', texts);
+        let textDetected = "";
+        texts.forEach(text => textDetected += text.description);
+        msg.reply('Text Detected=' + textDetected);
+      });
+    });
+  }
+  else {
+	  translate(destLang, textInTranslate, msg);
+  }
+}
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
+
+async function getTextFromImage(filename) {
+  // Imports the Google Cloud client library
+  const vision = require('@google-cloud/vision');
+
+  // Creates a client
+  const client = new vision.ImageAnnotatorClient();
+
+  // Performs label detection on the image file
+  const [result] = await client.labelDetection(filename);
+  const labels = result.labelAnnotations;
+  console.log('Labels:');
+  labels.forEach(label => console.log(label.description));
+  
+  const [textResult] = await client.textDetection(filename);
+  const texts = textResult.textAnnotations;
+  console.log('Texts:');
+  texts.forEach(text => console.log(text.description));
+  return texts;
+}
 
 client.on('message', async msg => {
 	let cmdSplit = msg.content.split(' ');
@@ -109,26 +193,25 @@ client.on('message', async msg => {
 	    }
 	    search(word, msg);
   	}
-  	else if (cmdSplit[0] === '!tr') {
-
-
-  		let textInTranslate = "error";
-  		if (cmdSplit.length < 2) {
-  			if (lastMessage == "") {
-  				msg.reply('must supply a messge');
-  				return;
-  			}
-  			textInTranslate = lastMessage;
-  		} else {
-  			textInTranslate = msg.content.substring(4);
-  		}
-  		if (textInTranslate.length > 600) {
-			msg.reply("Text is too long");
-  			return;
-		}
-  		console.log('incoming text to translate is ' + textInTranslate);
-		translate(textInTranslate, msg);
-  	}
+    else if (cmdSplit[0].startsWith('!tr')) {
+      if (cmdSplit[0].startsWith('!tr-')) {
+        let destLang = cmdSplit[0].substring(4);
+        if (destLang === "") {
+          destLang = "fr";
+        }
+        console.log("got destLang=" + destLang);
+        handleTranslateCommand(destLang, msg);
+      }
+      else {
+        handleTranslateCommand('fr', msg);
+      }
+    }
+    else if (cmdSplit[0] === '!fr') {
+      handleTranslateCommand('fr', msg);
+    }
+    else if (cmdSplit[0] === '!it') {
+      handleTranslateCommand('it', msg);
+    }
   	else if (cmdSplit[0] === '!say') {
   		if (cmdSplit.length < 2) {
 	    	msg.reply('supply sentence after !say');
