@@ -145,7 +145,7 @@ const handleTranslateCommand = function(destLang, msg) {
         console.log('got texts final=', texts);
         let textDetected = "";
         texts.forEach(text => textDetected += text.description);
-        msg.reply('Text Detected=' + textDetected);
+        msg.reply('Text Detected=' + textDetected.substring(0,1900));
       });
     });
   }
